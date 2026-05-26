@@ -103,16 +103,22 @@ All the information needed to execute and target this attack is freely available
 | Whether target has vigilant mode | Look at their unsigned commits — no badge = no vigilant mode | ✅ |
 | Whether target signs commits | Look at their commits — green badge = signs | ✅ |
 
-This produces a classic truth table of attackability:
+This produces a classic truth table of attackability. We classify detection into three levels:
 
-| Target signs commits? | Target has vigilant mode? | Attack outcome |
-|----------------------|--------------------------|----------------|
-| ✅ Yes | ✅ Yes | **"Partially verified"** badge appears — the only quadrant with any visual signal. But: (a) clicking the badge reveals the actual signer, meaning a human *can* tell, but only if they click; (b) the API still returns `verification.verified=true` — automated tools see a pass; (c) the badge still carries a green checkmark icon; (d) most users don't know what "Partially verified" means. (POC commit `376f02f` — both accounts vigilant-mode-on, full details in findings repo after disclosure window closes) |
-| ✅ Yes | ❌ No | **Fully invisible** — spoofed commit looks identical to target's real signed commits. Green "Verified" badge matches. No visual or API distinction. |
-| ❌ No | ✅ Yes | **Fully invisible** — target's real unsigned commits show "Unverified", but their history already contains "Verified" commits from GitHub's web-flow (merge button, pencil edits, suggestion accepts). Spoofed "Verified" commit blends in with those. |
-| ❌ No | ❌ No | **Fully invisible** — target has no signing pattern to compare against. Spoofed "Verified" commit actually looks *more* trustworthy than the target's real unsigned commits. |
+- 🔴 **Invisible** — no visual or programmatic signal exists. The spoofed commit is indistinguishable from a legitimate one at every layer.
+- 🟡 **Non-apparent** — a signal exists but is not visible at a glance. Requires deliberate deeper inspection (clicking the badge, reading the popup, understanding what "Partially verified" means). The default rendering still looks legitimate. A reviewer scrolling through a PR or commit history will not notice.
+- 🟢 **Apparent** — would be immediately obvious to a casual viewer without additional clicks.
 
-All four quadrants favor the attacker. Only one (both sign + both vigilant) produces any visual signal at all — "Partially verified" — and even that requires the viewer to click the badge and understand what they're seeing. The API returns `verified=true` in all four cases. Automated tools are blind across the board. And the attacker can determine which quadrant any target falls into before writing a single line of code, using only public information.
+| Target signs commits? | Target has vigilant mode? | Visual detection | API detection | Classification |
+|----------------------|--------------------------|------------------|---------------|----------------|
+| ✅ Yes | ✅ Yes | 🟡 **Non-apparent** — "Partially verified" badge appears instead of "Verified", but still carries a green checkmark icon. The actual signer is only revealed on click. Most users do not know what "Partially verified" means. | 🔴 `verified=true` | 🟡 Non-apparent |
+| ✅ Yes | ❌ No | 🔴 Identical to target's real signed commits | 🔴 `verified=true` | 🔴 Invisible |
+| ❌ No | ✅ Yes | 🔴 Target's history already contains "Verified" web-flow commits (merge button, pencil edits). Spoofed commit blends in. | 🔴 `verified=true` | 🔴 Invisible |
+| ❌ No | ❌ No | 🔴 Spoofed commit looks *more* trustworthy than target's real unsigned commits | 🔴 `verified=true` | 🔴 Invisible |
+
+No quadrant reaches 🟢 Apparent. Three out of four are fully invisible. The single non-apparent case requires the victim to have opted into vigilant mode AND the reviewer to click the badge AND understand the distinction — a chain of three conditions that rarely holds in practice. The API returns `verified=true` in all four cases. Automated tools are blind across the board.
+
+The attacker can determine which quadrant any target falls into before writing a single line of code, using only public information. (POC commit `376f02f` demonstrates the Yes/Yes quadrant — both accounts vigilant-mode-on, full details in findings repo after disclosure window closes.)
 
 The defense mechanism is opt-in, gated on the victim, and its absence is **publicly advertised** through the victim's own commit history. The attacker gets perfect reconnaissance for free.
 
