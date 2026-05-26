@@ -90,6 +90,19 @@ This means GitHub is aware that author-committer mismatch is a trust problem. Bu
 
 Linus Torvalds hasn't enabled it. Neither have most GitHub users.
 
+### Attackers Can Pre-Screen Who Is Vulnerable
+
+Here is the absurd part: whether a user has vigilant mode enabled is **publicly observable**. Any user's commit history is public on their profile. If their unsigned commits show **no badge at all** — they don't have vigilant mode. If unsigned commits show an **"Unverified"** badge — they do.
+
+This means an attacker can trivially enumerate targets before committing a single line:
+
+1. Pick a target identity to impersonate (a maintainer, a bot, a security reviewer)
+2. Open their GitHub profile → commits tab
+3. Look for any unsigned commit — no badge means no vigilant mode
+4. If no vigilant mode → spoofed commits will show a clean green "Verified" with zero visual distinction from legitimate ones
+
+The defense mechanism is opt-in, gated on the victim, and its absence is **publicly advertised** through the victim's own commit history. The attacker gets perfect reconnaissance for free.
+
 ### Invisible to Machines
 
 The `verification.reason` field in the API has **15 possible values** (`valid`, `unsigned`, `bad_email`, `unknown_key`, `expired_key`, `not_signing_key`, `gpgverify_error`, `gpgverify_unavailable`, `unknown_signature_type`, `no_user`, `unverified_email`, `malformed_signature`, `invalid`, `bad_cert`, `ocsp_pending`).
