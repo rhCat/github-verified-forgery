@@ -1,11 +1,27 @@
 ---
 layout: default
-title: "I committed as Linus Torvalds with a green Verified badge on GitHub"
+title: "That Verified Commit on GitHub? You Can't Tell Who Actually Made It."
 ---
 
-# I committed as Linus Torvalds with a green "Verified" badge on GitHub
+# That "Verified" Commit on GitHub? You Can't Tell Who Actually Made It.
 
-GitHub's own documentation establishes a chain of trust assumptions that, followed to their logical conclusion, reveals a verification gap that cannot be audited, cannot be programmatically detected, and is available to any GitHub user with a free account.
+## The Supply Chain Is Under Active Attack
+
+In the past fourteen months, the software supply chain has been hit repeatedly — and the attacks are accelerating:
+
+**May 2026** — [TeamPCP breached GitHub's own internal codebase](https://www.securityweek.com/github-confirms-hack-impacting-3800-internal-repositories/) via a poisoned VS Code extension, exfiltrating ~3,800 private repositories. GitHub confirmed the compromise.
+
+**May 2026** — The [Megalodon attack](https://www.securityweek.com/over-5500-github-repositories-infected-in-megalodon-supply-chain-attack/) injected malicious GitHub Actions workflows into 5,500+ repositories in a single six-hour window via automated commits.
+
+**March 2026** — The [prt-scan campaign](https://ebuildersecurity.com/cyber-news/prt-scan-ai-github-actions-supply-chain-attack-2026/) used AI to exploit `pull_request_target` workflows across 500 repositories, stealing AWS keys, Cloudflare API tokens, and Netlify credentials.
+
+**September 2025** — The [Shai-Hulud npm worm](https://unit42.paloaltonetworks.com/npm-supply-chain-attack/) compromised 500+ packages in 48 hours. It was self-replicating: every stolen npm token was immediately used to infect more packages. [Microsoft published a dedicated response guide.](https://www.microsoft.com/en-us/security/blog/2025/12/09/shai-hulud-2-0-guidance-for-detecting-investigating-and-defending-against-the-supply-chain-attack/)
+
+**March 2025** — The [tj-actions/changed-files compromise](https://www.cisa.gov/news-events/alerts/2025/03/18/supply-chain-compromise-third-party-github-action-cve-2025-30066) (CVE-2025-30066) hit 23,000+ repositories by retroactively rewriting version tags to point to malicious code. [CISA issued an advisory.](https://www.cisa.gov/news-events/alerts/2025/03/18/supply-chain-compromise-third-party-github-action-cve-2025-30066)
+
+Every one of these attacks exploited the gap between what CI/CD automation **trusts** and what is actually **verified**. Every post-mortem recommends "verify your commits" and "require signed commits."
+
+But what does "Verified" actually mean on GitHub?
 
 ---
 
@@ -48,13 +64,13 @@ The badge says **"Verified"** next to the author's name — but it verified the 
 GitHub's own API confirms this: a commit can return:
 
 ```
-author: torvalds
-committer: rhCat
+author: dependabot[bot]
+committer: attacker
 verification.verified: true
 verification.reason: valid
 ```
 
-The UI shows **Linus Torvalds** with a green checkmark. The signing key is mine.
+The UI shows **dependabot** with a green checkmark. The signing key belongs to the attacker. The same works for any GitHub user — `torvalds`, `copilot`, your team lead, your security reviewer. There is no difference in the API response, no difference in the UI rendering, and no way to tell the commit apart from a legitimate one.
 
 This is not a bug in the crypto. The GPG signature is valid. The flaw is in what "Verified" communicates versus what it actually checks.
 
