@@ -107,12 +107,12 @@ This produces a classic truth table of attackability:
 
 | Target signs commits? | Target has vigilant mode? | Attack outcome |
 |----------------------|--------------------------|----------------|
-| ✅ Yes | ✅ Yes | **Still invisible via web-flow path.** In theory, "Partially verified" should appear. In practice, commits signed by GitHub's own web-flow key (merge button, squash-merge API) bypass this entirely — `verified=true`, green badge, no partial flag. Empirically confirmed: both author and spoofed co-author had vigilant mode enabled, commit signed by web-flow, clean green "Verified" on both names. (empirically confirmed — POC commit `376f02f`, both accounts vigilant-mode-on, full details in findings repo after disclosure window closes) |
+| ✅ Yes | ✅ Yes | **"Partially verified"** badge appears — the only quadrant with any visual signal. But: (a) clicking the badge reveals the actual signer, meaning a human *can* tell, but only if they click; (b) the API still returns `verification.verified=true` — automated tools see a pass; (c) the badge still carries a green checkmark icon; (d) most users don't know what "Partially verified" means. (POC commit `376f02f` — both accounts vigilant-mode-on, full details in findings repo after disclosure window closes) |
 | ✅ Yes | ❌ No | **Fully invisible** — spoofed commit looks identical to target's real signed commits. Green "Verified" badge matches. No visual or API distinction. |
 | ❌ No | ✅ Yes | **Fully invisible** — target's real unsigned commits show "Unverified", but their history already contains "Verified" commits from GitHub's web-flow (merge button, pencil edits, suggestion accepts). Spoofed "Verified" commit blends in with those. |
 | ❌ No | ❌ No | **Fully invisible** — target has no signing pattern to compare against. Spoofed "Verified" commit actually looks *more* trustworthy than the target's real unsigned commits. |
 
-All four quadrants favor the attacker. All four are fully invisible when the web-flow signing path is used (merge button, squash-merge API), because GitHub's own key signs the commit unconditionally — vigilant mode never fires. And the attacker can determine which quadrant any target falls into before writing a single line of code, using only public information.
+All four quadrants favor the attacker. Only one (both sign + both vigilant) produces any visual signal at all — "Partially verified" — and even that requires the viewer to click the badge and understand what they're seeing. The API returns `verified=true` in all four cases. Automated tools are blind across the board. And the attacker can determine which quadrant any target falls into before writing a single line of code, using only public information.
 
 The defense mechanism is opt-in, gated on the victim, and its absence is **publicly advertised** through the victim's own commit history. The attacker gets perfect reconnaissance for free.
 
