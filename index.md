@@ -94,12 +94,25 @@ Linus Torvalds hasn't enabled it. Neither have most GitHub users.
 
 Here is the absurd part: whether a user has vigilant mode enabled is **publicly observable**. Any user's commit history is public on their profile. If their unsigned commits show **no badge at all** — they don't have vigilant mode. If unsigned commits show an **"Unverified"** badge — they do.
 
-This means an attacker can trivially enumerate targets before committing a single line:
+All the information needed to execute and target this attack is freely available through GitHub's public interfaces:
 
-1. Pick a target identity to impersonate (a maintainer, a bot, a security reviewer)
-2. Open their GitHub profile → commits tab
-3. Look for any unsigned commit — no badge means no vigilant mode
-4. If no vigilant mode → spoofed commits will show a clean green "Verified" with zero visual distinction from legitimate ones
+| What the attacker needs | Where to get it | Public? |
+|------------------------|-----------------|---------|
+| Target's username | GitHub profile | ✅ |
+| Target's email | `git log`, commit API, or profile | ✅ |
+| Whether target has vigilant mode | Look at their unsigned commits — no badge = no vigilant mode | ✅ |
+| Whether target signs commits | Look at their commits — green badge = signs | ✅ |
+
+This produces a classic truth table of attackability:
+
+| Target signs commits? | Target has vigilant mode? | Attack outcome |
+|----------------------|--------------------------|----------------|
+| ✅ Yes | ✅ Yes | **Partially visible** — "Partially verified" badge appears. Least favorable for attacker, but still succeeds at the API level (`verified=true`) |
+| ✅ Yes | ❌ No | **Fully invisible** — spoofed commit looks identical to target's real signed commits. Green "Verified" badge matches. No visual or API distinction. |
+| ❌ No | ✅ Yes | **Visible** — spoofed commit shows "Verified" while target's real commits show "Unverified". Anomalous but still green-badged. |
+| ❌ No | ❌ No | **Fully invisible** — target has no signing pattern to compare against. Spoofed "Verified" commit actually looks *more* trustworthy than the target's real unsigned commits. |
+
+Three out of four quadrants favor the attacker. The most common quadrant — signs commits, no vigilant mode — is **fully invisible**. And the attacker can determine which quadrant any target falls into before writing a single line of code, using only public information.
 
 The defense mechanism is opt-in, gated on the victim, and its absence is **publicly advertised** through the victim's own commit history. The attacker gets perfect reconnaissance for free.
 
