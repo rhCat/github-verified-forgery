@@ -109,16 +109,19 @@ This produces a classic truth table of attackability. We classify detection into
 - 🟡 **Non-apparent** — a signal exists but is not visible at a glance. Requires deliberate deeper inspection (clicking the badge, reading the popup, understanding what "Partially verified" means). The default rendering still looks legitimate. A reviewer scrolling through a PR or commit history will not notice.
 - 🟢 **Apparent** — would be immediately obvious to a casual viewer without additional clicks.
 
-| Target signs commits? | Target has vigilant mode? | Visual detection | API detection | Classification |
-|----------------------|--------------------------|------------------|---------------|----------------|
-| ✅ Yes | ✅ Yes | 🟡 **Non-apparent** — "Partially verified" badge appears instead of "Verified", but still carries a green checkmark icon. The actual signer is only revealed on click. Most users do not know what "Partially verified" means. | 🔴 `verified=true` | 🟡 Non-apparent |
-| ✅ Yes | ❌ No | 🔴 Identical to target's real signed commits | 🔴 `verified=true` | 🔴 Invisible |
-| ❌ No | ✅ Yes | 🔴 Target's history already contains "Verified" web-flow commits (merge button, pencil edits). Spoofed commit blends in. | 🔴 `verified=true` | 🔴 Invisible |
-| ❌ No | ❌ No | 🔴 Spoofed commit looks *more* trustworthy than target's real unsigned commits | 🔴 `verified=true` | 🔴 Invisible |
+**Important caveat on inspection depth:** For commits signed with the attacker's own GPG key, clicking the "Verified" badge does reveal the signer's key ID — a careful reviewer could notice the key doesn't belong to the displayed author. However, for commits signed via GitHub's web-flow (merge button, squash merge, pencil edits, suggestion accepts), the signer is always GitHub itself (key `B5690EEEBB952194`). There is no way to distinguish who triggered the web-flow signing — the badge popup is identical whether the merge was performed by a maintainer or an attacker. The web-flow path is 🔴 Invisible even under deep inspection.
 
-No quadrant reaches 🟢 Apparent. Three out of four are fully invisible. The single non-apparent case requires the victim to have opted into vigilant mode AND the reviewer to click the badge AND understand the distinction — a chain of three conditions that rarely holds in practice. The API returns `verified=true` in all four cases. Automated tools are blind across the board.
+| Target signs? | Target has vigilant mode? | Signing path | Visual detection | API detection | Classification |
+|--------------|--------------------------|-------------|------------------|---------------|----------------|
+| ✅ Yes | ✅ Yes | Attacker's GPG key | 🟡 "Partially verified" badge — signer's key visible on click, but not at a glance | 🔴 `verified=true` | 🟡 Non-apparent |
+| ✅ Yes | ✅ Yes | Web-flow (merge/squash) | 🔴 "Partially verified" badge — but clicking reveals GitHub's own key, identical to any legitimate merge. No way to tell who triggered it. | 🔴 `verified=true` | 🔴 Invisible |
+| ✅ Yes | ❌ No | Either | 🔴 Identical to target's real signed commits | 🔴 `verified=true` | 🔴 Invisible |
+| ❌ No | ✅ Yes | Either | 🔴 Target's history already contains "Verified" web-flow commits. Spoofed commit blends in. | 🔴 `verified=true` | 🔴 Invisible |
+| ❌ No | ❌ No | Either | 🔴 Spoofed commit looks *more* trustworthy than target's real unsigned commits | 🔴 `verified=true` | 🔴 Invisible |
 
-The attacker can determine which quadrant any target falls into before writing a single line of code, using only public information. (POC commit `376f02f` demonstrates the Yes/Yes quadrant — both accounts vigilant-mode-on, full details in findings repo after disclosure window closes.)
+No quadrant reaches 🟢 Apparent. Four out of five rows are fully invisible. The single 🟡 Non-apparent case requires: (1) the victim opted into vigilant mode, (2) the attacker used their own GPG key instead of the web-flow path, (3) the reviewer clicked the badge, and (4) the reviewer understood the signer mismatch — a chain of four conditions that rarely holds in practice. If the attacker uses the web-flow path instead, even this case drops to 🔴 Invisible.
+
+The API returns `verified=true` in every case. Automated tools are blind across the board. The attacker can determine which quadrant any target falls into, and choose the signing path accordingly, using only public information. (POC commit `376f02f` demonstrates the Yes/Yes web-flow case — both accounts vigilant-mode-on, full details in findings repo after disclosure window closes.)
 
 The defense mechanism is opt-in, gated on the victim, and its absence is **publicly advertised** through the victim's own commit history. The attacker gets perfect reconnaissance for free.
 
