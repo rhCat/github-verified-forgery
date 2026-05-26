@@ -109,10 +109,10 @@ This produces a classic truth table of attackability:
 |----------------------|--------------------------|----------------|
 | ✅ Yes | ✅ Yes | **Partially visible** — "Partially verified" badge appears. Least favorable for attacker, but still succeeds at the API level (`verified=true`) |
 | ✅ Yes | ❌ No | **Fully invisible** — spoofed commit looks identical to target's real signed commits. Green "Verified" badge matches. No visual or API distinction. |
-| ❌ No | ✅ Yes | **Visible** — spoofed commit shows "Verified" while target's real commits show "Unverified". Anomalous but still green-badged. |
+| ❌ No | ✅ Yes | **Fully invisible** — target's real unsigned commits show "Unverified", but their history already contains "Verified" commits from GitHub's web-flow (merge button, pencil edits, suggestion accepts). Spoofed "Verified" commit blends in with those. |
 | ❌ No | ❌ No | **Fully invisible** — target has no signing pattern to compare against. Spoofed "Verified" commit actually looks *more* trustworthy than the target's real unsigned commits. |
 
-Three out of four quadrants favor the attacker. The most common quadrant — signs commits, no vigilant mode — is **fully invisible**. And the attacker can determine which quadrant any target falls into before writing a single line of code, using only public information.
+All four quadrants favor the attacker. Three are fully invisible. The fourth ("Partially verified") still returns `verified=true` at the API level, passing every automated check. And the attacker can determine which quadrant any target falls into before writing a single line of code, using only public information.
 
 The defense mechanism is opt-in, gated on the victim, and its absence is **publicly advertised** through the victim's own commit history. The attacker gets perfect reconnaissance for free.
 
