@@ -115,9 +115,20 @@ The "Partially verified" state exists only in the UI layer. Automated consumers 
 
 ## Why This Cannot Be Fixed Downstream
 
-### No audit trail
+### The audit log doesn't help
 
-GitHub does not log or notify when someone authors a commit under another user's identity. The impersonated user has no way to know.
+GitHub's audit log *does* record `git.push` events — but it logs the **actor** (who pushed), not the commit's **author** field (who the UI displays). The one field that is being spoofed is the one field that isn't logged.
+
+> [Audit log events for your enterprise](https://docs.github.com/en/enterprise-cloud@latest/admin/monitoring-activity-in-your-enterprise/reviewing-audit-logs-for-your-enterprise/audit-log-events-for-your-enterprise)
+
+It gets worse:
+
+- Git audit events are **Enterprise Cloud only** — free, Pro, and Team orgs have no git event logging at all
+- Git events are only available via REST API, not the web UI
+- Retention is **7 days** (vs. 7 months for other audit events) — by the time you notice a spoofed commit, the push event is already gone
+- The impersonated user receives **no notification** — there is no mechanism on GitHub to discover that commits are being attributed to you without your knowledge
+
+Even an Enterprise Cloud customer running a SIEM cannot distinguish a legitimate commit from a spoofed one through the audit log alone, because the forged field is never recorded.
 
 ### No programmatic detection
 
